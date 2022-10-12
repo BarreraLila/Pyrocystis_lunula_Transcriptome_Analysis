@@ -4,6 +4,55 @@
 
 Plan: Mini explanation of sections + script
 
+### File Structure
+```
+P. Lunula
+|- Github
+|	|- Trinity_Assembly
+|	|	|- Annontation
+|	|	|- Assembly		
+|	|	|- PhyloDB
+|	|	|- salmon_quants
+|	|	|	|- A2_quants
+|	|	|	|- A3_quants
+|	|	|	|- A4_quants
+|	|	|	|- A5_quants
+|	|	|	|- B2_quants
+|	|	|	|- B3_quants
+|	|	|	|- B4_quants
+|	|	|	|- B5_quants
+|	|	|- trinity_assembly_output	
+|	| - Scripts
+|	|	|- Job Fails
+|- PhyloDB
+|- PhyloDBAnnotation
+|- Data
+|	|- A2
+|	|	|- R1
+|	|	|- R2
+|	|- A3
+|	|	|- R1
+|	|	|- R2
+|	|- A4
+|	|	|- R1
+|	|	|- R2
+|	|- A5
+|	|	|- R1
+|	|	|- R2
+|	|- B2
+|	|	|- R1
+|	|	|- R2
+|	|- B3
+|	|	|- R1
+|	|	|- R2
+|	|- B4
+|	|	|- R1
+|	|	|- R2
+|	|- B5
+|	|	|- R1
+|	|	|- R2
+```
+
 ## Cleaning Raw Data 
 
 - stats?

@@ -22,7 +22,6 @@ Abundance Estimations
 ## DESeq
 ## BLAST
 
-[link]
-(https://github.com/BarreraLila/Pyrocystis_lunula_Transcriptome_Analysis)
+[link](https://github.com/BarreraLila/Pyrocystis_lunula_Transcriptome_Analysis)
 
 ![KEGG pathway of photosynthesis comparing *P.lunula* in the Dark phase vs the Light phase. Image rendered using Pathview package in Rstudio](/images/0907_ko00195.phegg.pathview.png)

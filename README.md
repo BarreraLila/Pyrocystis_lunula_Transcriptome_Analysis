@@ -1,4 +1,6 @@
-# Pyrocystis_lunula_Transcriptome_Analysis
+# Pyrocystis lunula Transcriptome Analysis
+By: Lila L. Barrera & Reis M. Gadsden
+
 
 ## Introduction
 
@@ -286,8 +288,57 @@ diamond blastx -d keggdb \
 ## DESeq
 ## BLAST
 
-[link](https://github.com/BarreraLila/Pyrocystis_lunula_Transcriptome_Analysis)
-
 ## KEGG Pathview
+During our analysis we used the bioconductor package in R, <a href="https://bioconductor.org/packages/release/bioc/html/pathview.html">Pathview</a>, in order to visualize the up- and down-regulation of proteins within certain biological pathways. Some of the significant pathways that we choose to model were:
+* <a href ="https://www.genome.jp/pathway/map00195">Photosynthesis</a>
+<p align="center">
+	<img src ="/images/0907_ko00195.phegg.pathview.png" alt="KEGG pathway of photosynthesis comparing *P.lunula* in the Dark phase vs the Light phase. Image rendered using Pathview package in Rstudio" width=75%>
+</p>
 
-![KEGG pathway of photosynthesis comparing *P.lunula* in the Dark phase vs the Light phase. Image rendered using Pathview package in Rstudio](/images/0907_ko00195.phegg.pathview.png)
+* <a href="https://www.genome.jp/entry/ko04710">Circadian Rhythm</a>
+<p align="center">
+	<img src ="/images/0922_ko04710.phegg.pathview.png" alt="KEGG pathway of fluid shear stress comparing *P.lunula* in the Dark phase vs the Light phase. Image rendered using Pathview package in Rstudio" width=75%>
+</p>
+
+* <a href="https://www.genome.jp/dbget-bin/www_bget?pathway:map05418">Fluid Shear Stress</a>
+<p align="center">
+	<img src ="/images/0922_ko05418.phegg.pathview.png" alt="KEGG pathway of fluid shear stress comparing *P.lunula* in the Dark phase vs the Light phase. Image rendered using Pathview package in Rstudio" width=75%>
+</p>
+
+
+The R script that was used in order to generate these visuals is provided below:
+```
+##################################################################
+#                                                                #
+#                       pathview_script.R                        #
+#                                                                #
+#                                                                #
+# This script first cleans our input data then precedes to build #
+# the molecule simulation data needed for the Pathview package.  #
+#                                                                #
+# author: Reis Gadsden                                           #
+#                                                                #
+##################################################################
+
+# install pathview
+BiocManager::install("pathview")
+library(pathview) 
+
+# YOU WILL NEED TO UPDATE THIS TO BE THE CORRECT PATH
+path_to_csv <- "~/lunula/PheggdDESeq_KO.csv"
+
+# load the csv
+phegg <- read.csv(path_to_csv)
+
+# cast our data frame to a matrix
+phegg.matrix <- as.matrix(phegg)
+
+# set the row names of our matrix to the KO number
+rownames(phegg.matrix) <- substring(phegg.matrix[, 1], 2)
+
+# create a list that unjankifies our rownames (yeah this is dumb but it doesn't work without)
+phegg.matrix.data <- sim.mol.data(mol.type="gene.ko", nmol = 5000)
+
+# generate pathview graph
+phegg.matrix.pathview <- pathview(gene.data = phegg.matrix.data, pathway.id = "05418", species = "ko", out.suffix = "phegg.pathview", gene.idtype = "kegg", kegg.native = TRUE, low = list(gene="#FFC02A", cpd = "yellow"), high = list(gene = "#0C7BDC", cpd = "blue"))
+```

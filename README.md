@@ -289,12 +289,22 @@ diamond blastx -d keggdb \
 ## BLAST
 
 ## KEGG Pathview
-During our analysis we used the bioconductor package in R, <a href="https://bioconductor.org/packages/release/bioc/html/pathview.html">Pathview</a>, in order to visualize the up- and down-regulation of proteins within certain biological pathways. The pathways that we choose to model were:
+During our analysis we used the bioconductor package in R, <a href="https://bioconductor.org/packages/release/bioc/html/pathview.html">Pathview</a>, in order to visualize the up- and down-regulation of proteins within certain biological pathways. Some of the significant pathways that we choose to model were:
 * <a href ="https://www.genome.jp/pathway/map00195">Photosynthesis</a>
-* <a href ="https://www.genome.jp/entry/map04024">Cyclic AMP (cAMP)</a>
-* <a href="https://www.genome.jp/dbget-bin/www_bget?pathway:map05418">Fluid Shear Stress</a>
+<p align="center">
+	<img src ="/images/0907_ko00195.phegg.pathview.png" alt="KEGG pathway of photosynthesis comparing *P.lunula* in the Dark phase vs the Light phase. Image rendered using Pathview package in Rstudio" width=75%>
+</p>
 
-![KEGG pathway of photosynthesis comparing *P.lunula* in the Dark phase vs the Light phase. Image rendered using Pathview package in Rstudio](/images/0907_ko00195.phegg.pathview.png)
+* <a href="https://www.genome.jp/entry/ko04710">Circadian Rhythm</a>
+<p align="center">
+	<img src ="/images/0922_ko04710.phegg.pathview.png" alt="KEGG pathway of fluid shear stress comparing *P.lunula* in the Dark phase vs the Light phase. Image rendered using Pathview package in Rstudio" width=75%>
+</p>
+
+* <a href="https://www.genome.jp/dbget-bin/www_bget?pathway:map05418">Fluid Shear Stress</a>
+<p align="center">
+	<img src ="/images/0922_ko05418.phegg.pathview.png" alt="KEGG pathway of fluid shear stress comparing *P.lunula* in the Dark phase vs the Light phase. Image rendered using Pathview package in Rstudio" width=75%>
+</p>
+
 
 The R script that was used in order to generate these visuals is provided below:
 ```

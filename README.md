@@ -1,12 +1,24 @@
 # Pyrocystis lunula Transcriptome Analysis
 By: Lila L. Barrera & Reis M. Gadsden
 
+## Table of Contents
+1. [Introductions](#1)
+2. [File Structure](#2)
+3. [Cleaning Raw Data](#3)
+4. [Transcriptome Assembly](#4)
+5. [Abundance Estimation](#5)
+6. [Clustered Assembly](#6)
+7. [Annotation](#7)
+	a. [Functional](#7a)
+	b. [Taxonomic](#7b)
+8. [DESeq2](#8)
+9. [Pathview](#9)
 
-## Introduction
+## Introduction<a name="1"></a>
 
 Plan: Mini explanation of sections + script
 
-### File Structure
+### File Structure<a name="2"></a>
 ```
 P. Lunula
 |- Github
@@ -55,11 +67,66 @@ P. Lunula
 |	|	|- R2
 ```
 
-## Cleaning Raw Data 
+## Cleaning Raw Data <a name="3"></a>
 
-- stats?
+The raw data was cleaned on the Galaxy platform using the trimmomatic tool. Initially the data was cleaned using trimmomatic and FastQC on Longleaf using the following script:
 
-## Transcriptome Assembly
+```
+#!/bin/bash
+
+#SBATCH -p general
+#SBATCH --nodes=1
+
+# only asking for 1 node 
+
+#SBATCH --time=0-16:00:00
+#SBATCH --mem=90G
+#SBATCH --ntasks=16
+#SBATCH -J clean_align
+#SBATCH -o cleanalign.%A.out
+#SBATCH -e cleanalign.%A.err
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mail-user=lilalbar@unc.edu
+
+# load your required tools for QC and trimming
+module load trimmomatic
+module load fastqc
+
+# now cd into your dir with the files
+cd /pine/scr/l/i/lilalbar/p.lunula_fastq/
+
+# here we are creating an output fastq file on stats before we trim and saves - 
+# visualize if not provided in the file
+
+fastqc -t 8 --outdir ../data/before_trimming/
+
+# here it looks like we are taking all forward (R1) reads and trimmming them
+
+# 'for f in ' looks like a loop - "for files in" maybe 
+# * means zero or more characters
+# *R1* we're specifing for R1
+# ls /pine/scr/l/i/lilalbar/p.lunula_fastq/data/*/*R1* ls the forward reads 
+# of each sample file in the data dir on the scratch space
+
+for f in `ls /pine/scr/l/i/lilalbar/p.lunula_fastq/data/*/*R1* | cut -f1,2,3 -d'_'`
+do
+        echo $f
+        trimmomatic PE -threads 8 \
+                ${f}_R1.fq ${f}_R2.fq \
+                ${f}_fwd_paired_trimmed.fq.gz ${f}_fwd_unpaired_trimmed.fq.gz \
+                ${f}_rev_paired_trimmed.fq.gz ${f}_rev_unpaired_trimmed.fq.gz \
+                #ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2:keepBothReads \
+                LEADING:5 TRAILING:5 SLIDINGWINDOW:4:20 MINLEN:36
+
+done
+
+# this gives fastq output file after trimming and saves it
+fastqc -t 8 --outdir ../data/after_trimming/
+```
+
+However the data from the galaxy platform was choosen to be used in the following steps.
+
+## Transcriptome Assembly<a name="4"></a>
 Now that the data has been cleaned up, we can go about reassembling our transcripts from our data using Trinity. Trinity is a modular software package that reconstructs plausible transcripts from raw RNASeq data. Trinity uses k-mer and de Bruijn graphs and sequences to reconstruct these transcripts. Trinity will output a FASTA file containing all full length transcripts as well as partial length isoforms. Our Trinity assembly script is below:
 
 ```
@@ -119,7 +186,7 @@ ACGATGA
 
 The FASTA file is formatted in such that the first line is the FASTA header containing the name of the transcript, the length of the transcript, as well as the paths taken to create that transcript. The next line contains the sequence for the transcript listed in the line above it.
 
-## Abundance Estimation
+## Abundance Estimation<a name="5"></a>
 In order to be able to downstream analysis of our data so far, we will also need to quantify the counts of our transcripts across all our samples. There were many different packages we explored to complete this step but the two packages we attempted to use were Salmon and RSEM. This section will focus on our Salmon methodology as this was the package we used to quantify our transcripts moving forward. For Salmon we first must create an index with our clustered assembly, this only needs to be done once and can be reused for all samples. After this we must run a salmon quant of each of our samples, we did all our samples in one bash file for efficiency. Our bash file is provided below.
 
 ```
@@ -197,7 +264,7 @@ salmon quant -l A -i ./Alignment_Index \
 	-o B5_quants
 
 ```
-## Clustered Assembly
+## Clustered Assembly<a name="6"></a>
 
 - uses - KAAS, InterproScan and BLAST, phylo and kegg
 Abundance Estimations
@@ -224,9 +291,9 @@ cd-hit-est -i Trinity.fasta -o clustered_assembly.fa -c 0.98 -n 10 -d 100 -M 500
 ```
 Here we are clustering contigs based on whether they have a 98% similarity with each other. We went with the standard option of choosing 10 for our word size. For our description we allowed a length of 100. 500Gb of memory was specified in the SLURM headers so we allowed the clustering to utilize all of that memory if needed. In a similar manner we specified 12 tasks so we allow our clustering to utilize up to 12 threads.
 
-## Annotation
+## Annotation<a name="7"></a>
 In annotating our clustered assembly, we ran into many challenges and issues. These will be discussed more in a later section. We ended up using two different databases to annotate our information as we wanted both functional and taxonomic annotations. The two databases that we used to annotate our data were Kegg and PhyloDB.
-###Functional
+### Functional<a name="7a"></a>
 To start our Kegg annotation we needed to blast our sequences against the database using diamond. We used Kegg files provided on the Longleaf server to build our database to annotate from. To get these annotations we used a modified version of the program <a href ="https://github.com/ctberthiaume/keggannot">KeggAnnot</a>. The modified version can be found <a href ="https://github.com/reismgadsden/keggannot">here</a>. The modifications simply let us skip over unresolved pathways and allow the program to run to completion. The output of this step was a annotated fasta file as well as a tsv file containing the annotation information for each of the reconstructed contigs. The script for constructing this database is provided below:
 
 ```
@@ -256,7 +323,38 @@ diamond blastx -d keggdb \
 
 ```
 
-###Taxonomic
+KeggAnnot was then ran on the output files using the following script:
+
+```
+#!/bin/bash
+
+#BATCH -p general
+#SBATCH --nodes=1
+#SBATCH --time=0-5:00:00
+#SBATCH --mem=300G
+#SBATCH --ntasks=24
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mail-user=lilalbar@ad.unc.edu
+#SBATCH -J keggannot_k18
+#SBATCH -o keggannot_k18.%A.out
+#SBATCH -e keggannot_k18.%A.err
+
+cd /pine/scr/l/i/lilalbar/p.lunula_fastq/github/trinity_assembly/Annotation
+#git clone https://github.com/ctberthiaume/keggannot.git
+#git clone https://github.com/AlexanderLabWHOI/keggannot.git
+cd keggannot/
+module purge
+
+#module load python/3.5.1
+module load python/2.7.12 
+
+#python2 setup.py install --user
+#emailed marchetti github user and he suggest to change from /nas/longleaf/data/KEGG/KEGG to /nas/longleaf/data/KEGG/2018.11.15
+./bin/keggannot_genes2ko -m /nas/longleaf/data/KEGG/2018.11.15 /pine/scr/l/i/lilalbar/p.lunula_fastq/github/trinity_assembly/Annotation/clustered_assembly_kegg_annotation.m8 > ../annot_retry_kegg2018.11.15/annotated_kegg2018_information.tsv
+
+```
+
+### Taxonomic<a name="7b"></a>
 Our taxonomic annotation used PhyloDB, a marine life database used for metagenomics. Similar to our Kegg steps we used to diamond to construct a database using files provided to us. We then used the <a href ="https://github.com/Lswhiteh/phylodbannotation">PhyloDB Annotation</a> program that was designed by Logan Whitehouse in order to annotate our transcripts.
 
 ```
@@ -278,17 +376,36 @@ module load diamond
 cd /pine/scr/l/i/lilalbar/p.lunula_fastq/github/trinity_assembly/Annotation
 #Need to blast against PhyloDB
 #blastx Align translated DNA query sequences against a protein reference database.
-diamond makedb --in /path/to/Phylo/Database -d keggdb
-diamond blastx -d keggdb \
+diamond makedb --in /path/to/Phylo/Database -d phylo
+diamond blastx -d phylo \
 	-q clustered_assembly.fa \
-	-o clustered_assembly_kegg_annotation.m8 \
+	-o clustered_assembly_phylo_annotation.m8 \
 	-p 12 -e 0.000001 -k 1
 ```
 
-## DESeq
-## BLAST
+<a href="https://github.com/Lswhiteh/phylodbannotation">Fastannotation.py</a> was then ran on the output files using the following script:
 
-## KEGG Pathview
+```
+#!/bin/bash
+#SBATCH -p general
+#SBATCH --nodes=1
+#SBATCH --time=0-24:00:00
+#SBATCH --mem=300G
+#SBATCH --ntasks=12
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mail-user=lilalbar@ad.unc.edu
+#SBATCH -J diamond
+#SBATCH -o diamond.%A.out
+#SBATCH -e diamond.%A.err
+
+module load python3
+
+python3 phylodbannotation/fastannotation.py clustered_assembly.fa clustered_assembly_phylo_annotation.m8 phylo_annotated.fa output.tsvs
+```
+
+## DESeq<a name="8"></a>
+
+## KEGG Pathview<a name="9"></a>
 During our analysis we used the bioconductor package in R, <a href="https://bioconductor.org/packages/release/bioc/html/pathview.html">Pathview</a>, in order to visualize the up- and down-regulation of proteins within certain biological pathways. Some of the significant pathways that we choose to model were:
 * <a href ="https://www.genome.jp/pathway/map00195">Photosynthesis</a>
 <p align="center">
